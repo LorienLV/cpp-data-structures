@@ -20,14 +20,14 @@ public:
      * the pool will allocate when requested.
      */
     GrowingMemPool(std::size_t min_chunk_elements) noexcept
-        : min_chunk_elements(min_chunk_elements){};
+        : min_chunk_elements_(min_chunk_elements){};
 
     /**
      * Deallocate all the memory allocated.
      *
      */
     ~GrowingMemPool() noexcept {
-        for (auto &chunk : chunks) {
+        for (auto &chunk : chunks_) {
             ::operator delete(static_cast<void *>(chunk.data));
         }
     };
@@ -47,25 +47,25 @@ public:
     void *allocate(std::size_t num_elements, std::size_t element_bytes) {
         const std::size_t new_bytes = num_elements * element_bytes;
 
-        const bool new_chunk = chunks.empty() || chunks.back().total_bytes -
-                                                         chunks.back().used_bytes <
+        const bool new_chunk = chunks_.empty() || chunks_.back().total_bytes -
+                                                         chunks_.back().used_bytes <
                                                      new_bytes;
 
         void *ret = nullptr;
 
         if (new_chunk) {
-            const std::size_t min_chunk_bytes = min_chunk_elements * element_bytes;
+            const std::size_t min_chunk_bytes = min_chunk_elements_ * element_bytes;
             const std::size_t chunk_bytes = std::max(min_chunk_bytes, new_bytes);
             ret = ::operator new(chunk_bytes);
 #if DEBUG
             std::cerr << "Allocated " << chunk_bytes << " bytes\n";
 #endif
-            chunks.push_back({chunk_bytes, new_bytes, static_cast<std::byte *>(ret)});
+            chunks_.push_back({chunk_bytes, new_bytes, static_cast<std::byte *>(ret)});
         }
         else {
-            ret = static_cast<void *>(chunks.back().data + chunks.back().used_bytes);
-            std::cerr << "Using " << new_bytes << " bytes in chunk " << chunks.size() - 1 << "\n";
-            chunks.back().used_bytes += new_bytes;
+            ret = static_cast<void *>(chunks_.back().data + chunks_.back().used_bytes);
+            std::cerr << "Using " << new_bytes << " bytes in chunk " << chunks_.size() - 1 << "\n";
+            chunks_.back().used_bytes += new_bytes;
         }
 
         return ret;
@@ -77,7 +77,7 @@ private:
         std::size_t used_bytes;
         std::byte *data;
     };
-    std::list<Chunk> chunks;
+    std::list<Chunk> chunks_;
 
-    std::size_t min_chunk_elements;
+    std::size_t min_chunk_elements_;
 };

@@ -6,29 +6,37 @@ CXX:=g++
 # CFLAGS=
 CXXFLAGS:=-Wall -O3 -std=c++23
 DEPFLAGS:=-MD -MP # Autogenerate dependencies.
-CPPFLAGS:=-DDEBUG=1
+# CPPFLAGS:=
 # LDFLAGS:=
 # INCLUDES:=
 
 # Directories.
 BUILDDIR:=build
-SRCDIR:=src
+SRCDIR:=examples
 OBJDIR:=$(BUILDDIR)/obj
 
 # Files.
-SRCS:=$(shell find $(SRCDIR) -name "*.cpp")
-OBJS:=$(subst $(SRCDIR),$(OBJDIR),$(SRCS:%.cpp=%.o))
 DEPS:=$(subst $(SRCDIR),$(OBJDIR),$(SRCS:%.cpp=%.d))
 
 #
 # Executables.
 #
-TEST:=$(BUILDDIR)/test
+TEST_VECTOR_OBS:=$(OBJDIR)/test_vector.o
+TEST_VECTOR:=$(BUILDDIR)/test_vector
+
+TEST_SEGMENTED_VECTOR_OBS:=$(OBJDIR)/test_segmented_vector.o
+TEST_SEGMENTED_VECTOR:=$(BUILDDIR)/test_segmented_vector
+
+TEST_GROWING_ALLOCATOR_OBS:=$(OBJDIR)/test_growing_allocator.o
+TEST_GROWING_ALLOCATOR:=$(BUILDDIR)/test_growing_allocator
 
 #
 # Generate executables
 #
-$(TEST): $(OBJS)
+TESTS:=$(TEST_VECTOR) $(TEST_SEGMENTED_VECTOR) $(TEST_GROWING_ALLOCATOR)
+
+# Generic link rule for all binaries in $(BUILDDIR)
+$(BUILDDIR)/%: $(OBJDIR)/%.o
 	$(CXX) $(CXXFLAGS) $^ $(LDFLAGS) -o $@
 
 #
@@ -46,7 +54,7 @@ $(OBJDIR)/%.o: $(SRCDIR)/%.cpp
 .PHONY: all
 all: main
 
-main: $(TEST)
+main: $(TESTS)
 
 .PHONY: clean
 clean:
